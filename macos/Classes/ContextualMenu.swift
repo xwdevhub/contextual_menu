@@ -36,7 +36,6 @@ public class ContextualMenu: NSMenu, NSMenuDelegate {
             let icon: String = itemDict["icon"] as? String ?? ""
             let path = Bundle.main.bundlePath + "/Contents/Frameworks/App.framework/Resources/flutter_assets/" + icon
             let iconImage = NSImage(contentsOfFile: path)
-            iconImage?.size = NSSize(width: 20.0, height: 20.0)
             
             if (type == "separator") {
                 menuItem = NSMenuItem.separator()
