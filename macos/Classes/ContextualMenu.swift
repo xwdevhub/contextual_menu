@@ -33,6 +33,10 @@ public class ContextualMenu: NSMenu, NSMenuDelegate {
             let toolTip: String = itemDict["toolTip"] as? String ?? ""
             let checked: Bool? = itemDict["checked"] as? Bool
             let disabled: Bool = itemDict["disabled"] as? Bool ?? true
+            let icon: String = itemDict["icon"] as? String ?? ""
+            let path = Bundle.main.bundlePath + "/Contents/Frameworks/App.framework/Resources/flutter_assets/" + icon
+            let iconImage = NSImage(contentsOfFile: path)
+            iconImage?.size = NSSize(width: 20.0, height: 20.0)
             
             if (type == "separator") {
                 menuItem = NSMenuItem.separator()
@@ -46,6 +50,9 @@ public class ContextualMenu: NSMenu, NSMenuDelegate {
             menuItem.isEnabled = !disabled
             menuItem.action = !disabled ? #selector(statusItemMenuButtonClicked) : nil
             menuItem.target = self
+            if iconImage != nil {
+                menuItem.image = iconImage
+            }
             
             switch (type) {
             case "separator":
