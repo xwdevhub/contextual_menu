@@ -108,6 +108,7 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
   menuInfo.dwMenuData = menuId;
   SetMenuInfo(menu, &menuInfo);
   HBITMAP pDstImg;
+  // wchar_t Str[] = L"C:\\Users\\swc\\Desktop\\test.bmp";
 
   int count = GetMenuItemCount(menu);
   for (int i = 0; i < count; i++) {
@@ -124,15 +125,18 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
         std::get<std::string>(item_map.at(EncodableValue("label")));
     auto* checked = std::get_if<bool>(ValueOrNull(item_map, "checked"));
     bool disabled = std::get<bool>(item_map.at(EncodableValue("disabled")));
-    std::string icon =
-        std::get<std::string>(item_map.at(EncodableValue("icon")));
-    // icon="modules/specific_business_desktop/assets/images/im/menu/im_menu_copy.bmp";
+    std::string icon;
+    auto iconValue = item_map.find(EncodableValue("icon"));
+    if (iconValue != item_map.end()) {
+      auto icon_value_auto = iconValue->second;
+      if (std::holds_alternative<std::string>(icon_value_auto)) {
+        icon = std::get<std::string>(icon_value_auto);
+      }
+    }
     std::cout << icon << std::endl;
     wchar_t* wc = new wchar_t[icon.size()];
     swprintf(wc, 100, L"%S", icon.c_str());
-    pDstImg = static_cast<HBITMAP>(LoadImage(
-        GetModuleHandle(nullptr), wc, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE));
-
+    pDstImg = static_cast<HBITMAP>(LoadImage( GetModuleHandle(nullptr), wc, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE|LR_CREATEDIBSECTION|LR_LOADTRANSPARENT));
     UINT_PTR item_id = id;
     UINT uFlags = MF_STRING;
 
