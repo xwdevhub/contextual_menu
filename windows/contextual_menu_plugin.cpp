@@ -107,6 +107,7 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
   menuInfo.fMask = MIM_MENUDATA;
   menuInfo.dwMenuData = menuId;
   SetMenuInfo(menu, &menuInfo);
+  HBITMAP pDstImg;
 
   int count = GetMenuItemCount(menu);
   for (int i = 0; i < count; i++) {
@@ -123,6 +124,14 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
         std::get<std::string>(item_map.at(EncodableValue("label")));
     auto* checked = std::get_if<bool>(ValueOrNull(item_map, "checked"));
     bool disabled = std::get<bool>(item_map.at(EncodableValue("disabled")));
+    std::string icon =
+        std::get<std::string>(item_map.at(EncodableValue("icon")));
+    // icon="modules/specific_business_desktop/assets/images/im/menu/im_menu_copy.bmp";
+    std::cout << icon << std::endl;
+    wchar_t* wc = new wchar_t[icon.size()];
+    swprintf(wc, 100, L"%S", icon.c_str());
+    pDstImg = static_cast<HBITMAP>(LoadImage(
+        GetModuleHandle(nullptr), wc, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE));
 
     UINT_PTR item_id = id;
     UINT uFlags = MF_STRING;
@@ -149,6 +158,10 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
         item_id = reinterpret_cast<UINT_PTR>(sub_menu);
       }
       AppendMenuW(menu, uFlags, item_id, g_converter.from_bytes(label).c_str());
+      if (!icon.empty()) {
+        SetMenuItemBitmaps(hMenu, ((UINT)item_id), MF_BYCOMMAND, pDstImg,
+                           pDstImg);
+      }
     }
   }
 }
