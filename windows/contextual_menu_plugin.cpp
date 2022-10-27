@@ -11,13 +11,13 @@
 #include <map>
 #include <memory>
 #include <sstream>
-
+#include <string>
+#include<iostream>
 using flutter::EncodableList;
 using flutter::EncodableMap;
 using flutter::EncodableValue;
 
 namespace {
-
 const EncodableValue* ValueOrNull(const EncodableMap& map, const char* key) {
   auto it = map.find(EncodableValue(key));
   if (it == map.end()) {
@@ -108,24 +108,28 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
   menuInfo.dwMenuData = menuId;
   SetMenuInfo(menu, &menuInfo);
   HBITMAP pDstImg;
+  wchar_t runPath[MAX_PATH] = {0};
+  wchar_t* wc = new wchar_t[MAX_PATH];
+  GetModuleFileName(NULL, runPath, sizeof(runPath) / sizeof(runPath[0]));
+  std::wstring Path;
   // wchar_t Str[] = L"C:\\Users\\swc\\Desktop\\test.bmp";
-
   int count = GetMenuItemCount(menu);
   for (int i = 0; i < count; i++) {
     // always remove at 0 because they shift every time
     RemoveMenu(menu, 0, MF_BYPOSITION);
   }
-
+  
   for (EncodableValue item_value : items) {
+    std::string icon = "";
     EncodableMap item_map = std::get<EncodableMap>(item_value);
     int id = std::get<int>(item_map.at(EncodableValue("id")));
     std::string type =
         std::get<std::string>(item_map.at(EncodableValue("type")));
-    std::string label =
-        std::get<std::string>(item_map.at(EncodableValue("label")));
+    std::string label = std::get<std::string>(item_map.at(EncodableValue("label")));
+  
+    ;
     auto* checked = std::get_if<bool>(ValueOrNull(item_map, "checked"));
     bool disabled = std::get<bool>(item_map.at(EncodableValue("disabled")));
-    std::string icon;
     auto iconValue = item_map.find(EncodableValue("icon"));
     if (iconValue != item_map.end()) {
       auto icon_value_auto = iconValue->second;
@@ -134,9 +138,16 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
       }
     }
     std::cout << icon << std::endl;
-    wchar_t* wc = new wchar_t[icon.size()];
-    swprintf(wc, 100, L"%S", icon.c_str());
-    pDstImg = static_cast<HBITMAP>(LoadImage( GetModuleHandle(nullptr), wc, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE|LR_CREATEDIBSECTION|LR_LOADTRANSPARENT));
+    Path = runPath;
+    Path.erase(Path.find_last_of(L'\\'));
+    Path.append(L"\\data\\flutter_assets\\");
+    swprintf(wc, icon.size()+1, L"%S", icon.c_str());
+    Path.append(wc);
+    HGDIOBJ hgdiobj =
+        LoadImage(GetModuleHandle(nullptr), Path.c_str(), IMAGE_BITMAP, 0, 0,
+                  LR_LOADFROMFILE | LR_CREATEDIBSECTION | LR_LOADTRANSPARENT);
+    pDstImg = (HBITMAP)(hgdiobj);
+    
     UINT_PTR item_id = id;
     UINT uFlags = MF_STRING;
 
@@ -168,6 +179,7 @@ void ContextualMenuPlugin::_CreateMenu(HMENU menu,
       }
     }
   }
+
 }
 
 std::optional<LRESULT> ContextualMenuPlugin::HandleWindowProc(HWND hWnd,
@@ -239,7 +251,6 @@ void ContextualMenuPlugin::PopUp(
   GetCursorPos(&cursorPos);
   x = cursorPos.x;
   y = cursorPos.y;
-
   if (args.find(EncodableValue("position")) != args.end()) {
     const EncodableMap& position =
         std::get<EncodableMap>(args.at(EncodableValue("position")));
@@ -269,7 +280,6 @@ void ContextualMenuPlugin::PopUp(
     y = static_cast<double>((position_y * device_pixel_ratio) +
                             (window_rect.top + title_bar_height));
   }
-
   if (placement.compare("topLeft") == 0) {
     uFlags = TPM_BOTTOMALIGN | TPM_RIGHTALIGN;
   } else if (placement.compare("topRight") == 0) {
@@ -279,10 +289,8 @@ void ContextualMenuPlugin::PopUp(
   } else if (placement.compare("bottomRight") == 0) {
     uFlags = TPM_TOPALIGN | TPM_LEFTALIGN;
   }
-
   TrackPopupMenu(hMenu, uFlags, static_cast<int>(x), static_cast<int>(y), 0,
                  hWnd, NULL);
-
   result->Success(EncodableValue(true));
 }
 
