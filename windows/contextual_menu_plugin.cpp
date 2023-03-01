@@ -289,6 +289,11 @@ void ContextualMenuPlugin::PopUp(
   } else if (placement.compare("bottomRight") == 0) {
     uFlags = TPM_TOPALIGN | TPM_LEFTALIGN;
   }
+  //version let menu closed by blank click
+  HWND hwnd = FindWindow(L"FLUTTER_RUNNER_WIN32_WINDOWS_TRAYU", NULL);
+  if (hwnd != NULL) {
+    SetForegroundWindow(hwnd);
+  }
   TrackPopupMenu(hMenu, uFlags, static_cast<int>(x), static_cast<int>(y), 0,
                  hWnd, NULL);
   result->Success(EncodableValue(true));
